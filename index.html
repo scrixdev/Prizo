@@ -807,18 +807,31 @@ footer{ padding:52px 0 40px; border-top:1px solid var(--line); margin-top:20px; 
     window.scrollTo(0, 0);
   }
 
+  function currentHashId(){
+    return (location.hash || '#accueil').replace('#', '') || 'accueil';
+  }
+
   links.forEach(function(l){
     l.addEventListener('click', function(e){
       e.preventDefault();
       var id = l.getAttribute('data-page');
-      // Pas d'History API : cet artifact tourne dans un iframe sandboxé
-      // (about:srcdoc) où pushState/replaceState lèvent une SecurityError.
-      // La navigation reste donc purement en mémoire, sans toucher à l'URL.
+      try {
+        // Met à jour l'URL (#id) pour permettre les liens directs et le
+        // bouton retour. Échoue en SecurityError dans un iframe sandboxé
+        // (aperçu Claude) : dans ce cas on navigue quand même, sans URL.
+        history.pushState(null, '', '#' + id);
+      } catch (err) {}
       showPage(id);
     });
   });
 
-  showPage('accueil');
+  window.addEventListener('popstate', function(){
+    showPage(currentHashId());
+  });
+
+  // Affiche la bonne page dès le chargement si l'URL contient déjà un hash
+  // (ex: https://scrixdev.github.io/Prizo/#confidentialite).
+  showPage(currentHashId());
 })();
 </script>
 
